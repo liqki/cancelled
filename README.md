@@ -3,7 +3,7 @@
 ## To-Do
 
 - [x] basic homepage
-- [ ] functionality to create a room
+- [x] functionality to create a room
 - [ ] functionality to join a room
 - [ ] functionality to leave a room
 - [ ] lobby page
