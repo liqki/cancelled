@@ -1,12 +1,7 @@
 import { createServer } from "node:http";
 import next from "next";
 import { Server } from "socket.io";
-
-export type RoomData = {
-  host: string;
-  players: string[];
-  state: "waiting" | "playing" | "finished";
-};
+import { RoomData } from "@/utils/types";
 
 const activeRooms = new Map<string, RoomData>();
 
@@ -23,25 +18,31 @@ app.prepare().then(() => {
   const io = new Server(httpServer);
 
   io.on("connection", (socket) => {
-    socket.on("create-room", (roomId: string) => {
+    socket.on("create-room", (roomId: string, name: string) => {
       if (activeRooms.has(roomId)) {
         socket.emit("error", "Room already exists");
         return;
       }
 
       activeRooms.set(roomId, {
-        host: socket.id,
-        players: [],
+        players: [
+          {
+            id: socket.id,
+            host: true,
+            name,
+            score: 0,
+            color: "blue",
+          },
+        ],
         state: "waiting",
       });
 
       socket.join(roomId);
+      socket.emit("room-update", activeRooms.get(roomId));
     });
 
     socket.on("join-room", (roomId: string) => {
       const room = activeRooms.get(roomId);
-
-      console.log(room);
 
       if (!room) {
         socket.emit("error", "Room does not exist");
@@ -53,8 +54,37 @@ app.prepare().then(() => {
         return;
       }
 
-      room.players.push(socket.id);
+      room.players.push({
+        id: socket.id,
+        host: false,
+        name: "test",
+        score: 0,
+        color: "red",
+      });
       socket.join(roomId);
+      socket.emit("room-update", room);
+      socket.to(roomId).emit("room-update", room);
+    });
+
+    socket.on("leave-room", (roomId: string) => {
+      const room = activeRooms.get(roomId);
+
+      if (!room) return;
+
+      room.players.map((player) => {
+        if (player.id === socket.id && player.host) {
+          if (room.players.length > 1) {
+            room.players[1].host = true;
+          } else {
+            activeRooms.delete(roomId);
+          }
+        }
+      });
+
+      room.players = room.players.filter((player) => player.id !== socket.id);
+
+      socket.to(roomId).emit("room-update", room);
+      socket.leave(roomId);
     });
   });
 
