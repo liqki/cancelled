@@ -41,7 +41,7 @@ app.prepare().then(() => {
       socket.emit("room-update", activeRooms.get(roomId));
     });
 
-    socket.on("join-room", (roomId: string) => {
+    socket.on("join-room", (roomId: string, name: string) => {
       const room = activeRooms.get(roomId);
 
       if (!room) {
@@ -57,7 +57,7 @@ app.prepare().then(() => {
       room.players.push({
         id: socket.id,
         host: false,
-        name: "test",
+        name: name,
         score: 0,
         color: "red",
       });
@@ -66,7 +66,8 @@ app.prepare().then(() => {
       socket.to(roomId).emit("room-update", room);
     });
 
-    socket.on("leave-room", (roomId: string) => {
+    socket.on("disconnect", () => {
+      const roomId = Array.from(activeRooms.keys()).find((roomId) => activeRooms.get(roomId)?.players.some((player) => player.id === socket.id)) as string;
       const room = activeRooms.get(roomId);
 
       if (!room) return;

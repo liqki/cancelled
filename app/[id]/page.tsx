@@ -2,7 +2,7 @@
 
 import { RoomData } from "@/utils/types";
 import { useRouter, useSearchParams } from "next/navigation";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
 export default function GameRoom({ params }: { params: { id: string } }) {
@@ -10,15 +10,18 @@ export default function GameRoom({ params }: { params: { id: string } }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const roomId = params.id;
+  const socket = io({ autoConnect: searchParams.has("name") });
 
   useEffect(() => {
-    const socket = io();
+    if (!searchParams.get("name")) router.push(`/join?roomId=${roomId}`);
 
     socket.on("connect", () => {
       if (searchParams.get("host") === "true") {
         socket.emit("create-room", roomId, searchParams.get("name"));
+        router.replace(`/${roomId}`);
       } else {
-        socket.emit("join-room", roomId);
+        socket.emit("join-room", roomId, searchParams.get("name"));
+        router.replace(`/${roomId}`);
       }
     });
 
@@ -30,16 +33,12 @@ export default function GameRoom({ params }: { params: { id: string } }) {
       router.push(`/?error=${error}`);
     });
 
-    socket.on("disconnect", () => {
-      socket.emit("leave-room", roomId);
-    });
-
-    window.addEventListener("beforeunload", () => {
-      socket.disconnect();
-    });
-
     return () => {
-      socket.disconnect();
+      socket.off("connect");
+      socket.off("room-update");
+      socket.off("error");
+      socket.off("disconnect");
+      window.removeEventListener("beforeunload", () => {});
     };
   }, []);
 
@@ -47,5 +46,22 @@ export default function GameRoom({ params }: { params: { id: string } }) {
     console.log(roomData);
   }, [roomData]);
 
-  return <div>{}</div>;
+  return (
+    <div>
+      <h1>Game Room</h1>
+      <p>Room ID: {roomId}</p>
+      <p>Host: {roomData?.players.find((player) => player.id === socket.id)?.host}</p>
+      <p>Name: {roomData?.players.find((player) => player.id === socket.id)?.name}</p>
+      <p>State: {roomData?.state}</p>
+      <ul>
+        {roomData?.players.map((player) => (
+          <li key={player.id}>
+            <p className={`text-${player.color}-500`}>
+              {player.name} - {player.score}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
