@@ -2,14 +2,17 @@
 
 import { Player } from "@/utils/types";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 
 export default function GameRoom({ params }: { params: { id: string } }) {
   const [players, setPlayers] = useState<Player[]>([]);
+  const playersRef = useRef<Player[]>([]);
   const [state, setState] = useState<"waiting" | "playing" | "finished">("waiting");
+  const stateRef = useRef<"waiting" | "playing" | "finished">("waiting");
   const [socketId, setSocketId] = useState<string>("");
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
+  const currentPlayerRef = useRef<Player | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const roomId = params.id;
@@ -24,8 +27,6 @@ export default function GameRoom({ params }: { params: { id: string } }) {
   };
 
   useEffect(() => {
-    // if (!searchParams.get("name")) router.push(`/join?roomId=${roomId}`);
-
     socket.once("connect", () => {
       if (socket.id) setSocketId(socket.id);
       if (searchParams.get("host") === "true") {
@@ -37,23 +38,24 @@ export default function GameRoom({ params }: { params: { id: string } }) {
 
     socket.on("player-joined", (player: Player) => {
       addPlayer(player);
-      if (players.length >= 10 || state !== "waiting") {
+      if (playersRef.current.length >= 10 || state !== "waiting") {
         socket.emit("join-error", { message: "Room is full or game has started", id: player.id });
         return;
       }
-      if (currentPlayer?.host) {
-        socket.emit("initial-data", { players, state, id: player.id });
+      if (currentPlayerRef.current?.host) {
+        socket.emit("initial-data", { players: [...playersRef.current, player], state, id: player.id });
       }
     });
 
     socket.on("player-left", (id: string) => {
-      const wasHost = players.find((player) => player.id === id)?.host;
+      const wasHost = playersRef.current.find((player) => player.id === id)?.host;
       removePlayer(id);
-      if (wasHost && players.length > 0) {
-        socket.emit("new-host", { id: players[0].id, roomId });
+      if (wasHost && playersRef.current.length > 1) {
+        socket.emit("new-host", { id: playersRef.current.find((player) => player.id !== id)?.id, roomId });
       }
     });
 
+    // TODO: Not working when only 2 players
     socket.on("new-host", (id: string) => {
       setPlayers((players) => players.map((player) => ({ ...player, host: player.id === id })));
     });
@@ -79,17 +81,24 @@ export default function GameRoom({ params }: { params: { id: string } }) {
   }, []);
 
   useEffect(() => {
-    if (socketId && players.length > 0 && !currentPlayer) {
+    if (socketId && players.length > 0) {
       setCurrentPlayer(players.find((player) => player.id === socketId) || null);
     }
   }, [players, socketId]);
+
+  useEffect(() => {
+    if (currentPlayer) currentPlayerRef.current = currentPlayer;
+    if (players) playersRef.current = players;
+    if (state) stateRef.current = state;
+  }, [currentPlayer, players, state]);
 
   return (
     <div>
       <h1>Game Room</h1>
       <p>Room ID: {roomId}</p>
-      <p>Host: {String(players.find((player) => player.id === socketId)?.host)}</p>
-      <p>Name: {players.find((player) => player.id === socketId)?.name}</p>
+      <p>Host: {String(currentPlayer?.host)}</p>
+      <p>Name: {currentPlayer?.name}</p>
+      <p>ID: {currentPlayer?.id}</p>
       <p>State: {state}</p>
       <ul>
         {players.map((player) => (

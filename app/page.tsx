@@ -2,11 +2,19 @@
 
 import { generateRoomId } from "@/utils/generateRoomId";
 import { useRouter } from "next/navigation";
-import { useRef } from "react";
+import { useEffect, useState } from "react";
 
 export default function Home({ searchParams }: { searchParams: { error: string } }) {
   const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [name, setName] = useState<string>("");
+
+  useEffect(() => {
+    setName(localStorage.getItem("name") || "");
+  }, []);
+
+  useEffect(() => {
+    if (name) localStorage.setItem("name", name);
+  }, [name]);
 
   return (
     <main className="w-screen h-screen grid place-items-center">
@@ -19,15 +27,21 @@ export default function Home({ searchParams }: { searchParams: { error: string }
           className="flex flex-col gap-2 w-full"
           onSubmit={(e) => {
             e.preventDefault();
-            if (!inputRef.current?.value) {
+            if (!name) {
               router.push("/?error=Name is required");
               return;
             }
             const roomId = generateRoomId();
-            router.push(`/${roomId}/?host=true&name=${inputRef.current.value}`);
+            router.push(`/${roomId}/?host=true&name=${name}`);
           }}
         >
-          <input type="text" ref={inputRef} placeholder="Enter your name" className="bg-transparent border-2 border-[#FFFFFF]/20 box-border p-3 rounded-full outline-none focus:border-[#FFFFFF]/60" />
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Enter your name"
+            className="bg-transparent border-2 border-[#FFFFFF]/20 box-border p-3 rounded-full outline-none focus:border-[#FFFFFF]/60"
+          />
           <button className="rounded-full bg-white text-black p-3 hover:scale-[1.01] transition-transform" type="submit">
             Create a Room
           </button>

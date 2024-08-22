@@ -36,11 +36,6 @@ app.prepare().then(() => {
         socket.emit("error", "Room does not exist");
         return;
       }
-      // TODO: handle clientside
-      // if (room.state !== "waiting") {
-      //   socket.emit("error", "Room is not accepting players");
-      //   return;
-      // }
 
       socket.join(roomId);
       socket.to(roomId).emit("player-joined", {
@@ -64,20 +59,10 @@ app.prepare().then(() => {
       socket.to(id).emit("initial-data", { players, state });
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnecting", () => {
       const roomId = Array.from(socket.rooms).filter((id) => id !== socket.id)[0];
 
       if (!roomId) return;
-
-      // room.players.map((player) => {
-      //   if (player.id === socket.id && player.host) {
-      //     if (room.players.length > 1) {
-      //       room.players[1].host = true;
-      //     } else {
-      //       activeRooms.delete(roomId);
-      //     }
-      //   }
-      // });
 
       socket.to(roomId).emit("player-left", socket.id);
       socket.leave(roomId);

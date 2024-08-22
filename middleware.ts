@@ -6,8 +6,9 @@ export function middleware(req: NextRequest) {
   }
 
   if (req.nextUrl.pathname !== "/" && req.nextUrl.pathname !== "/join" && !req.nextUrl.searchParams.has("name")) {
-    // TODO: Fix req.nextUrl.pathname.slice(1) returns join
-    return NextResponse.redirect(new URL("/join/?roomId=" + req.nextUrl.pathname.slice(1), req.url));
+    return NextResponse.redirect(new URL("/join?roomId=" + req.nextUrl.pathname.slice(1), req.url));
+  } else if (req.nextUrl.pathname !== "/" && req.nextUrl.pathname !== "/join") {
+    return NextResponse.rewrite(new URL("/" + req.nextUrl.pathname.slice(1), req.url));
   }
 
   return NextResponse.next();
