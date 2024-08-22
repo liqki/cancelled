@@ -1,4 +1,5 @@
 "use client";
+import Heading from "@/components/Heading";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -18,10 +19,7 @@ export default function Join({ searchParams }: { searchParams: { roomId: string 
   return (
     <main className="w-screen h-screen grid place-items-center">
       <div className="w-4/5 max-w-96 flex flex-col gap-10 justify-center items-center">
-        <div>
-          <h1 className="text-7xl font-bold text-center">Cancelled!</h1>
-          <p className="text-lg text-center">Play with your friends and get cancelled</p>
-        </div>
+        <Heading />
         <form
           className="flex flex-col gap-2 w-full"
           onSubmit={(e) => {

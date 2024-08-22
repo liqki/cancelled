@@ -1,5 +1,6 @@
 "use client";
 
+import Lobby from "@/components/game/Lobby";
 import { Player } from "@/utils/types";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -49,13 +50,17 @@ export default function GameRoom({ params }: { params: { id: string } }) {
 
     socket.on("player-left", (id: string) => {
       const wasHost = playersRef.current.find((player) => player.id === id)?.host;
-      removePlayer(id);
       if (wasHost && playersRef.current.length > 1) {
+        if (playersRef.current.length === 2) {
+          setPlayers((players) => players.map((player) => ({ ...player, host: player.id === currentPlayerRef.current?.id })));
+          removePlayer(id);
+          return;
+        }
         socket.emit("new-host", { id: playersRef.current.find((player) => player.id !== id)?.id, roomId });
       }
+      removePlayer(id);
     });
 
-    // TODO: Not working when only 2 players
     socket.on("new-host", (id: string) => {
       setPlayers((players) => players.map((player) => ({ ...player, host: player.id === id })));
     });
@@ -92,23 +97,5 @@ export default function GameRoom({ params }: { params: { id: string } }) {
     if (state) stateRef.current = state;
   }, [currentPlayer, players, state]);
 
-  return (
-    <div>
-      <h1>Game Room</h1>
-      <p>Room ID: {roomId}</p>
-      <p>Host: {String(currentPlayer?.host)}</p>
-      <p>Name: {currentPlayer?.name}</p>
-      <p>ID: {currentPlayer?.id}</p>
-      <p>State: {state}</p>
-      <ul>
-        {players.map((player) => (
-          <li key={player.id}>
-            <p className={`text-${player.color}-500`}>
-              {player.name} - {player.score}
-            </p>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+  return <>{state === "waiting" && <Lobby players={players} setPlayers={setPlayers} currentPlayer={currentPlayer} />}</>;
 }
