@@ -1,21 +1,15 @@
 "use client";
 import Heading from "@/components/Heading";
 import JoinForm from "@/components/JoinForm";
+import { UserContext } from "@/context/UserContext";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
 export default function Join({ searchParams }: { searchParams: { roomId: string } }) {
   const [error, setError] = useState<string>("");
-  const [name, setName] = useState<string>("");
   const router = useRouter();
 
-  useEffect(() => {
-    setName(localStorage.getItem("name") || "");
-  }, []);
-
-  useEffect(() => {
-    if (name) localStorage.setItem("name", name);
-  }, [name]);
+  const { name } = useContext(UserContext);
 
   return (
     <main className="w-screen h-screen grid place-items-center">

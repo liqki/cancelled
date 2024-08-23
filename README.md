@@ -6,6 +6,7 @@
 - [x] functionality to create a room
 - [x] functionality to join a room
 - [x] functionality to leave a room
-- [ ] lobby page
+- [x] lobby page
+- [x] kick players
 - [ ] functionality to start a game
 - [ ] game with multiple rounds

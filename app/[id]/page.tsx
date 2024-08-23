@@ -2,23 +2,20 @@
 
 import Lobby from "@/components/game/Lobby";
 import { UserContext } from "@/context/UserContext";
+import { useSocket } from "@/hooks/useSocket";
 import { useStateRef } from "@/hooks/useStateRef";
 import { Player } from "@/utils/types";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useContext, useEffect } from "react";
-import { io } from "socket.io-client";
+import { useContext, useEffect, useState } from "react";
 
 export default function GameRoom({ params }: { params: { id: string } }) {
   const [players, setPlayers, playersRef] = useStateRef<Player[]>([]);
   const [state, setState, stateRef] = useStateRef<"waiting" | "playing" | "finished">("waiting");
   const [currentPlayer, setCurrentPlayer, currentPlayerRef] = useStateRef<Player | null>(null);
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const roomId = params.id;
-  const socket = io({ autoConnect: searchParams.has("name") });
+  const { socket } = useSocket(roomId);
 
-  const { id, setId, color } = useContext(UserContext);
+  const { id } = useContext(UserContext);
 
   const addPlayer = (player: Player) => {
     setPlayers((players) => [...players, player]);
@@ -28,18 +25,13 @@ export default function GameRoom({ params }: { params: { id: string } }) {
     setPlayers((players) => players.filter((player) => player.id !== id));
   };
 
-  useEffect(() => {
-    socket.once("connect", () => {
-      if (socket.id) setId(socket.id);
-      if (searchParams.get("host") === "true") {
-        socket.emit("create-room", roomId, searchParams.get("name"), color);
-      } else {
-        socket.emit("join-room", roomId, searchParams.get("name"), color);
-      }
-      window.history.replaceState(null, "", `/${roomId}`);
-    });
+  const kickPlayer = (id: string) => {
+    socket?.emit("player-kicked", roomId, id);
+    removePlayer(id);
+  };
 
-    socket.on("player-joined", (player: Player) => {
+  useEffect(() => {
+    socket?.on("player-joined", (player: Player) => {
       addPlayer(player);
       if (playersRef.current.length >= 10 || state !== "waiting") {
         socket.emit("join-error", { message: "Room is full or game has started", id: player.id });
@@ -50,7 +42,7 @@ export default function GameRoom({ params }: { params: { id: string } }) {
       }
     });
 
-    socket.on("player-left", (id: string) => {
+    socket?.on("player-left", (id: string) => {
       const wasHost = playersRef.current.find((player) => player.id === id)?.host;
       if (wasHost && playersRef.current.length > 1) {
         if (playersRef.current.length === 2) {
@@ -63,33 +55,22 @@ export default function GameRoom({ params }: { params: { id: string } }) {
       removePlayer(id);
     });
 
-    socket.on("new-host", (id: string) => {
+    socket?.on("new-host", (id: string) => {
       setPlayers((players) => players.map((player) => ({ ...player, host: player.id === id })));
     });
 
-    socket.on("initial-data", ({ players, state }) => {
+    socket?.on("initial-data", ({ players, state }) => {
       setPlayers(players);
       setState(state);
     });
 
-    socket.on("error", (error: string) => {
-      router.push(`/?error=${error}`);
-    });
-
-    window.addEventListener("beforeunload", () => {
-      router.push("/?error=Disconnected from the room");
-    });
-
     return () => {
-      socket.off("connect");
-      socket.off("player-joined");
-      socket.off("player-left");
-      socket.off("new-host");
-      socket.off("initial-data");
-      socket.off("error");
-      window.removeEventListener("beforeunload", () => {});
+      socket?.off("player-joined");
+      socket?.off("player-left");
+      socket?.off("new-host");
+      socket?.off("initial-data");
     };
-  }, []);
+  }, [socket]);
 
   useEffect(() => {
     if (id && players.length > 0) {
@@ -103,5 +84,5 @@ export default function GameRoom({ params }: { params: { id: string } }) {
     if (state) stateRef.current = state;
   }, [currentPlayer, players, state]);
 
-  return <>{state === "waiting" && <Lobby players={players} setPlayers={setPlayers} currentPlayer={currentPlayer} />}</>;
+  return <>{state === "waiting" && <Lobby players={players} currentPlayer={currentPlayer} kickPlayer={kickPlayer} />}</>;
 }

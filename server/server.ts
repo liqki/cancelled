@@ -59,6 +59,12 @@ app.prepare().then(() => {
       socket.to(id).emit("initial-data", { players, state });
     });
 
+    socket.on("player-kicked", (roomId: string, id: string) => {
+      socket.to(id).emit("kicked");
+      socket.leave(roomId);
+      socket.to(roomId).emit("player-left", id);
+    });
+
     socket.on("disconnecting", () => {
       const roomId = Array.from(socket.rooms).filter((id) => id !== socket.id)[0];
 

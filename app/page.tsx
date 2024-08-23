@@ -2,21 +2,14 @@
 
 import Heading from "@/components/Heading";
 import JoinForm from "@/components/JoinForm";
+import { UserContext } from "@/context/UserContext";
 import { generateRoomId } from "@/utils/generateRoomId";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useContext } from "react";
 
 export default function Home({ searchParams }: { searchParams: { error: string } }) {
   const router = useRouter();
-  const [name, setName] = useState<string>("");
-
-  useEffect(() => {
-    setName(localStorage.getItem("name") || "");
-  }, []);
-
-  useEffect(() => {
-    if (name) localStorage.setItem("name", name);
-  }, [name]);
+  const { name } = useContext(UserContext);
 
   return (
     <main className="w-screen h-screen grid place-items-center">
