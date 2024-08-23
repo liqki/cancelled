@@ -1,7 +1,8 @@
 "use client";
 import Heading from "@/components/Heading";
+import JoinForm from "@/components/JoinForm";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Join({ searchParams }: { searchParams: { roomId: string } }) {
   const [error, setError] = useState<string>("");
@@ -28,23 +29,10 @@ export default function Join({ searchParams }: { searchParams: { roomId: string 
               setError("Name is required");
               return;
             }
-            router.push(`/${searchParams.roomId}?name=${name}`);
+            router.replace(`/${searchParams.roomId}?name=${name}`);
           }}
         >
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              setError("");
-            }}
-            placeholder="Enter your name"
-            className="bg-transparent border-2 border-[#FFFFFF]/20 box-border p-3 rounded-full outline-none focus:border-[#FFFFFF]/60"
-          />
-          <button className="rounded-full bg-white text-black p-3 hover:scale-[1.01] transition-transform" type="submit">
-            Join Room
-          </button>
-          {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+          <JoinForm error={error} label="Join Room" />
         </form>
       </div>
     </main>

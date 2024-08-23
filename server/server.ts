@@ -15,7 +15,7 @@ app.prepare().then(() => {
   const io = new Server(httpServer);
 
   io.on("connection", (socket) => {
-    socket.on("create-room", (roomId: string, name: string) => {
+    socket.on("create-room", (roomId: string, name: string, color: string) => {
       if (io.sockets.adapter.rooms.has(roomId)) {
         socket.emit("error", "Room already exists");
         return;
@@ -27,11 +27,11 @@ app.prepare().then(() => {
         host: true,
         name,
         score: 0,
-        color: "blue",
+        color,
       });
     });
 
-    socket.on("join-room", (roomId: string, name: string) => {
+    socket.on("join-room", (roomId: string, name: string, color: string) => {
       if (!io.sockets.adapter.rooms.has(roomId)) {
         socket.emit("error", "Room does not exist");
         return;
@@ -43,7 +43,7 @@ app.prepare().then(() => {
         host: false,
         name: name,
         score: 0,
-        color: "red",
+        color,
       });
     });
 

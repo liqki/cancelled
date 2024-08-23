@@ -1,23 +1,24 @@
 "use client";
 
 import Lobby from "@/components/game/Lobby";
+import { UserContext } from "@/context/UserContext";
+import { useStateRef } from "@/hooks/useStateRef";
 import { Player } from "@/utils/types";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect } from "react";
 import { io } from "socket.io-client";
 
 export default function GameRoom({ params }: { params: { id: string } }) {
-  const [players, setPlayers] = useState<Player[]>([]);
-  const playersRef = useRef<Player[]>([]);
-  const [state, setState] = useState<"waiting" | "playing" | "finished">("waiting");
-  const stateRef = useRef<"waiting" | "playing" | "finished">("waiting");
-  const [socketId, setSocketId] = useState<string>("");
-  const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
-  const currentPlayerRef = useRef<Player | null>(null);
+  const [players, setPlayers, playersRef] = useStateRef<Player[]>([]);
+  const [state, setState, stateRef] = useStateRef<"waiting" | "playing" | "finished">("waiting");
+  const [currentPlayer, setCurrentPlayer, currentPlayerRef] = useStateRef<Player | null>(null);
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const roomId = params.id;
   const socket = io({ autoConnect: searchParams.has("name") });
+
+  const { id, setId, color } = useContext(UserContext);
 
   const addPlayer = (player: Player) => {
     setPlayers((players) => [...players, player]);
@@ -29,12 +30,13 @@ export default function GameRoom({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     socket.once("connect", () => {
-      if (socket.id) setSocketId(socket.id);
+      if (socket.id) setId(socket.id);
       if (searchParams.get("host") === "true") {
-        socket.emit("create-room", roomId, searchParams.get("name"));
+        socket.emit("create-room", roomId, searchParams.get("name"), color);
       } else {
-        socket.emit("join-room", roomId, searchParams.get("name"));
+        socket.emit("join-room", roomId, searchParams.get("name"), color);
       }
+      window.history.replaceState(null, "", `/${roomId}`);
     });
 
     socket.on("player-joined", (player: Player) => {
@@ -74,6 +76,10 @@ export default function GameRoom({ params }: { params: { id: string } }) {
       router.push(`/?error=${error}`);
     });
 
+    window.addEventListener("beforeunload", () => {
+      router.push("/?error=Disconnected from the room");
+    });
+
     return () => {
       socket.off("connect");
       socket.off("player-joined");
@@ -86,10 +92,10 @@ export default function GameRoom({ params }: { params: { id: string } }) {
   }, []);
 
   useEffect(() => {
-    if (socketId && players.length > 0) {
-      setCurrentPlayer(players.find((player) => player.id === socketId) || null);
+    if (id && players.length > 0) {
+      setCurrentPlayer(players.find((player) => player.id === id) || null);
     }
-  }, [players, socketId]);
+  }, [players, id]);
 
   useEffect(() => {
     if (currentPlayer) currentPlayerRef.current = currentPlayer;

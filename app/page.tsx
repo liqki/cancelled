@@ -1,6 +1,7 @@
 "use client";
 
 import Heading from "@/components/Heading";
+import JoinForm from "@/components/JoinForm";
 import { generateRoomId } from "@/utils/generateRoomId";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -33,17 +34,7 @@ export default function Home({ searchParams }: { searchParams: { error: string }
             router.push(`/${roomId}/?host=true&name=${name}`);
           }}
         >
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter your name"
-            className="bg-transparent border-2 border-[#FFFFFF]/20 box-border p-3 rounded-full outline-none focus:border-[#FFFFFF]/60"
-          />
-          <button className="rounded-full bg-white text-black p-3 hover:scale-[1.01] transition-transform" type="submit">
-            Create a Room
-          </button>
-          {searchParams.error && <p className="text-sm text-red-500 text-center">{searchParams?.error}</p>}
+          <JoinForm error={searchParams.error} label="Create a Room" />
         </form>
       </div>
     </main>

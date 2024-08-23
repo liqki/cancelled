@@ -11,4 +11,8 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  .text-outline {
+    text-shadow: 0.05em 0 black, 0 0.05em black, -0.05em 0 black, 0 -0.05em black, -0.05em -0.05em black, -0.05em 0.05em black, 0.05em -0.05em black, 0.05em 0.05em black;
+  }
 }
