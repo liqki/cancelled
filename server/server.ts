@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import next from "next";
 import { Server } from "socket.io";
-import { Response } from "@/utils/types";
+import { Player, Response } from "@/utils/types";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -107,7 +107,15 @@ app.prepare().then(() => {
     });
 
     socket.on("vote", (roomId: string, voter: string, responseId: string) => {
-      socket.to(roomId).emit("vote", voter, responseId);
+      io.in(roomId).emit("vote", voter, responseId);
+    });
+
+    socket.on("result-phase", (roomId: string) => {
+      socket.to(roomId).emit("result-phase");
+    });
+
+    socket.on("new-round", (roomId: string) => {
+      socket.to(roomId).emit("new-round");
     });
 
     socket.on("disconnecting", () => {

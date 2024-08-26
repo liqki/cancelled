@@ -51,17 +51,14 @@ export default function GamePrompt({
                 socket?.emit("new-response", roomId, { playerId: id, response, switchResponse: "", switchPlayerId: "", voteIds: [] });
               } else {
                 setResponses((responses) =>
-                  responses.map((item) =>
-                    // item?.response === prompt ? { playerId: item?.playerId, response: item?.response, switchResponse: response, switchPlayerId: id, voteIds: item?.voteIds } : item
-                    {
-                      if (item?.response === prompt) {
-                        socket?.emit("new-response", roomId, { playerId: item?.playerId, response: item?.response, switchResponse: response, switchPlayerId: id, voteIds: item?.voteIds });
-                        return { playerId: item?.playerId, response: item?.response, switchResponse: response, switchPlayerId: id, voteIds: item?.voteIds };
-                      } else {
-                        return item;
-                      }
+                  responses.map((item) => {
+                    if (item?.response === prompt) {
+                      socket?.emit("new-response", roomId, { playerId: item?.playerId, response: item?.response, switchResponse: response, switchPlayerId: id, voteIds: item?.voteIds });
+                      return { playerId: item?.playerId, response: item?.response, switchResponse: response, switchPlayerId: id, voteIds: item?.voteIds };
+                    } else {
+                      return item;
                     }
-                  )
+                  })
                 );
               }
               socket?.emit("request-next-phase", roomId);

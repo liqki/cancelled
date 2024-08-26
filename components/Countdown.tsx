@@ -9,7 +9,8 @@ export default function Countdown({ stopCountdown }: { stopCountdown: () => void
   }, [time]);
 
   return (
-    <div className="w-screen h-screen grid place-items-center">
+    <div className="w-screen h-screen flex flex-col justify-center items-center gap-4">
+      <p className="text-2xl">Get ready for the next round in</p>
       <div className="grid place-items-center w-32 aspect-square rounded-full bg-white text-black font-bold text-7xl">{time}</div>
     </div>
   );

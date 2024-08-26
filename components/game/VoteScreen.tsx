@@ -10,6 +10,7 @@ export default function VoteScreen({
   currentPlayer,
   setResponses,
   setPlayers,
+  setRequestNextPhase,
 }: {
   socket: Socket | null;
   responses: Response[];
@@ -18,7 +19,10 @@ export default function VoteScreen({
   currentPlayer: Player | null;
   setResponses: Dispatch<SetStateAction<Response[]>>;
   setPlayers: Dispatch<SetStateAction<Player[]>>;
+  setRequestNextPhase: Dispatch<SetStateAction<number>>;
 }) {
+  const [voted, setVoted] = useState(false);
+
   const confirmVote = (voter: string, responseId: string) => {
     setResponses((responses) =>
       responses.map((response) => {
@@ -31,12 +35,14 @@ export default function VoteScreen({
   useEffect(() => {
     socket?.on("vote", (voter: string, responseId: string) => {
       confirmVote(voter, responseId);
-      // TODO: set player score after vote finishes
-      // setPlayers((players) =>
-      //   players.map((player) => {
-      //     return { ...player, score: player.score + (responses.find((response) => response.playerId === responseId)?.voteIds.length || 0) };
-      //   })
-      // );
+      setPlayers((players) =>
+        players.map((player) => {
+          if (player.id === responseId) {
+            return { ...player, score: player.score + 1 };
+          }
+          return player;
+        })
+      );
     });
 
     return () => {
@@ -48,7 +54,18 @@ export default function VoteScreen({
     <>
       <div className="py-4 box-border w-4/5 lg:w-screen px-4 lg:h-screen grid gap-4 items-center justify-center place-items-center sm:grid-cols-2 grid-cols-1">
         {responses.map((response, i) => (
-          <VoteCard key={i} socket={socket} response={response} players={players} currentPlayer={currentPlayer} roomId={roomId} confirmVote={confirmVote} />
+          <VoteCard
+            key={i}
+            socket={socket}
+            response={response}
+            players={players}
+            currentPlayer={currentPlayer}
+            roomId={roomId}
+            confirmVote={confirmVote}
+            voted={voted}
+            setVoted={setVoted}
+            setRequestNextPhase={setRequestNextPhase}
+          />
         ))}
       </div>
     </>
@@ -62,6 +79,9 @@ function VoteCard({
   players,
   currentPlayer,
   confirmVote,
+  voted,
+  setVoted,
+  setRequestNextPhase,
 }: {
   socket: Socket | null;
   roomId: string;
@@ -69,15 +89,17 @@ function VoteCard({
   players: Player[];
   currentPlayer: Player | null;
   confirmVote: (voter: string, responseId: string) => void;
+  voted: boolean;
+  setVoted: Dispatch<SetStateAction<boolean>>;
+  setRequestNextPhase: Dispatch<SetStateAction<number>>;
 }) {
   const [tiltAngle, setTiltAngle] = useState(0);
   const [player, setPlayer] = useState<Player | null>(null);
-  const [voted, setVoted] = useState(false);
 
   const vote = () => {
     socket?.emit("vote", roomId, currentPlayer?.id, player?.id);
-    setVoted(true);
-    confirmVote(currentPlayer?.id!, player?.id!);
+    socket?.emit("request-next-phase", roomId);
+    setRequestNextPhase((requestNextPhase) => requestNextPhase + 1);
   };
 
   useEffect(() => {
@@ -93,11 +115,14 @@ function VoteCard({
       className="relative lg:w-full w-4/5 lg:h-full aspect-[9/16] lg:aspect-auto bg-white rounded-md text-black flex flex-col cursor-pointer"
       style={{ transform: `rotate(${tiltAngle}deg)` }}
       onClick={() => {
-        if (currentPlayer?.id !== player?.id && !voted) vote();
+        if (currentPlayer?.id !== player?.id && !voted) {
+          setVoted(true);
+          vote();
+        }
       }}
     >
       {response?.voteIds?.map((voter, i) => (
-        <div key={i} className={`rounded-full h-8 w-8 aspect-square absolute top-2 right-[${6 + i * 10}px]`} style={{ background: `${players.find((player) => player.id === voter)?.color}` }} />
+        <div key={i} className="rounded-full h-8 w-8 aspect-square absolute top-2" style={{ background: `${players.find((player) => player.id === voter)?.color}`, right: `${6 + i * (32 + 6)}px` }} />
       ))}
       <p className="text-3xl font-bold px-2">{response.switchResponse}</p>
       <div className="flex items-center gap-2 p-4">
