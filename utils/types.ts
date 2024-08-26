@@ -10,5 +10,6 @@ export type Response = {
   playerId: string;
   response: string;
   switchResponse: string;
+  switchPlayerId: string;
   voteIds: string[];
 };

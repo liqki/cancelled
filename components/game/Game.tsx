@@ -1,14 +1,28 @@
 import { prompts } from "@/utils/gameTasks";
 import { Player, Response } from "@/utils/types";
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Socket } from "socket.io-client";
 import GamePrompt from "./GamePrompt";
+import VoteScreen from "./VoteScreen";
 
-export default function Game({ socket, roomId, players, currentPlayer }: { socket: Socket | null; roomId: string; players: Player[]; currentPlayer: Player | null }) {
+export default function Game({
+  socket,
+  roomId,
+  players,
+  currentPlayer,
+  setPlayers,
+}: {
+  socket: Socket | null;
+  roomId: string;
+  players: Player[];
+  currentPlayer: Player | null;
+  setPlayers: Dispatch<SetStateAction<Player[]>>;
+}) {
   const [responses, setResponses] = useState<Response[]>([]);
   const [prompt, setPrompt] = useState("");
   const [round, setRound] = useState(1);
   const [phase, setPhase] = useState<"game" | "switch" | "vote" | "result">("game");
+  const [requestNextPhase, setRequestNextPhase] = useState(0);
 
   const insertOrUpdateResponse = (response: Response) => {
     setResponses((responses) => {
@@ -41,25 +55,37 @@ export default function Game({ socket, roomId, players, currentPlayer }: { socke
     });
 
     socket?.on("response-assigned", (response: Response) => {
+      setPhase("switch");
       setPrompt(response?.response);
+    });
+
+    socket?.on("vote-phase", (responses: Response[]) => {
+      setResponses(responses);
+      setPhase("vote");
+    });
+
+    socket?.on("request-next-phase", () => {
+      setRequestNextPhase((requestNextPhase) => requestNextPhase + 1);
     });
 
     return () => {
       socket?.off("new-response");
       socket?.off("response-assigned");
+      socket?.off("vote-phase");
+      socket?.off("request-next-phase");
     };
   }, []);
 
   useEffect(() => {
-    if (phase === "game" && responses.length === players.length) {
-      nextPhase();
-    }
-
-    if (phase === "switch" && responses.map((item) => item.switchResponse !== "").length === players.length) {
-      console.log("switch phase done");
-      nextPhase();
-    }
+    console.log(responses);
   }, [responses]);
+
+  useEffect(() => {
+    if (requestNextPhase >= players.length) {
+      nextPhase();
+      setRequestNextPhase(0);
+    }
+  }, [requestNextPhase]);
 
   useEffect(() => {
     if (!currentPlayer?.host) return;
@@ -83,11 +109,11 @@ export default function Game({ socket, roomId, players, currentPlayer }: { socke
   return (
     <main className="w-screen h-screen grid place-items-center">
       {phase === "vote" ? (
-        <div>Voting</div>
+        <VoteScreen socket={socket} roomId={roomId} responses={responses} players={players} currentPlayer={currentPlayer} setResponses={setResponses} setPlayers={setPlayers} />
       ) : phase === "switch" ? (
-        <GamePrompt id={currentPlayer?.id!} socket={socket} roomId={roomId} prompt={prompt} setResponses={setResponses} type="switch" />
+        <GamePrompt id={currentPlayer?.id!} socket={socket} roomId={roomId} prompt={prompt} setResponses={setResponses} setRequestNextPhase={setRequestNextPhase} type="switch" />
       ) : (
-        <GamePrompt id={currentPlayer?.id!} socket={socket} roomId={roomId} prompt={prompt} setResponses={setResponses} type="game" />
+        <GamePrompt id={currentPlayer?.id!} socket={socket} roomId={roomId} prompt={prompt} setResponses={setResponses} setRequestNextPhase={setRequestNextPhase} type="game" />
       )}
     </main>
   );

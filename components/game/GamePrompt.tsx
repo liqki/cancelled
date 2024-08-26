@@ -8,6 +8,7 @@ export default function GamePrompt({
   roomId,
   prompt,
   setResponses,
+  setRequestNextPhase,
   type,
 }: {
   id: string;
@@ -15,6 +16,7 @@ export default function GamePrompt({
   roomId: string;
   prompt: string;
   setResponses: Dispatch<SetStateAction<Response[]>>;
+  setRequestNextPhase: Dispatch<SetStateAction<number>>;
   type: "game" | "switch";
 }) {
   const [response, setResponse] = useState("");
@@ -44,9 +46,26 @@ export default function GamePrompt({
             onSubmit={(e) => {
               e.preventDefault();
               if (!response) return;
-              if (type === "game") setResponses((responses) => [...responses, { playerId: id, response, switchResponse: "", voteIds: [] }]);
-              else setResponses((responses) => responses.map((item) => (item?.response === prompt ? { ...item, switchResponse: response } : item)));
-              socket?.emit("new-response", roomId, { playerId: id, response });
+              if (type === "game") {
+                setResponses((responses) => [...responses, { playerId: id, response, switchResponse: "", switchPlayerId: "", voteIds: [] }]);
+                socket?.emit("new-response", roomId, { playerId: id, response, switchResponse: "", switchPlayerId: "", voteIds: [] });
+              } else {
+                setResponses((responses) =>
+                  responses.map((item) =>
+                    // item?.response === prompt ? { playerId: item?.playerId, response: item?.response, switchResponse: response, switchPlayerId: id, voteIds: item?.voteIds } : item
+                    {
+                      if (item?.response === prompt) {
+                        socket?.emit("new-response", roomId, { playerId: item?.playerId, response: item?.response, switchResponse: response, switchPlayerId: id, voteIds: item?.voteIds });
+                        return { playerId: item?.playerId, response: item?.response, switchResponse: response, switchPlayerId: id, voteIds: item?.voteIds };
+                      } else {
+                        return item;
+                      }
+                    }
+                  )
+                );
+              }
+              socket?.emit("request-next-phase", roomId);
+              setRequestNextPhase((requestNextPhase) => requestNextPhase + 1);
               setSubmitted(true);
             }}
           >

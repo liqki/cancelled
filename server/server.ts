@@ -98,6 +98,18 @@ app.prepare().then(() => {
       });
     });
 
+    socket.on("request-next-phase", (roomId: string) => {
+      socket.to(roomId).emit("request-next-phase");
+    });
+
+    socket.on("vote-phase", (roomId: string, responses: Response[]) => {
+      socket.to(roomId).emit("vote-phase", responses);
+    });
+
+    socket.on("vote", (roomId: string, voter: string, responseId: string) => {
+      socket.to(roomId).emit("vote", voter, responseId);
+    });
+
     socket.on("disconnecting", () => {
       const roomId = Array.from(socket.rooms).filter((id) => id !== socket.id)[0];
 

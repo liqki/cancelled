@@ -18,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <UserContextProvider>
-        <body className={`${inter.className} bg-black text-white select-none`}>{children}</body>
+        <body className={`${inter.className} bg-black text-white select-none overflow-x-hidden`}>{children}</body>
       </UserContextProvider>
     </html>
   );

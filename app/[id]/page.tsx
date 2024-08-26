@@ -114,7 +114,7 @@ export default function GameRoom({ params }: { params: { id: string } }) {
       ) : state === "waiting" ? (
         <Lobby players={players} currentPlayer={currentPlayer} kickPlayer={kickPlayer} startGame={startGame} />
       ) : state === "playing" ? (
-        <Game socket={socket} roomId={roomId} players={players} currentPlayer={currentPlayer} />
+        <Game socket={socket} roomId={roomId} players={players} currentPlayer={currentPlayer} setPlayers={setPlayers} />
       ) : (
         <div>Ended</div>
       )}
