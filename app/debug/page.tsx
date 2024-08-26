@@ -1,7 +1,11 @@
 "use client";
 
-import Game from "@/components/game/Game";
+import SwitchPrompt from "@/components/game/SwitchPrompt";
 
 export default function page() {
-  return <Game socket={null} players={[]} currentPlayer={null} />;
+  return (
+    <main className="w-screen h-screen grid place-items-center">
+      <SwitchPrompt prompt="This is a pretty long test text to test the display of the switch prompt LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL" />
+    </main>
+  );
 }

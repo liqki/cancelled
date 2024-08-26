@@ -5,3 +5,8 @@ export type Player = {
   score: number;
   color: string;
 };
+
+export type Response = {
+  playerId: string;
+  response: string;
+};

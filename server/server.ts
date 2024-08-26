@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import next from "next";
 import { Server } from "socket.io";
+import { Response } from "@/utils/types";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -66,6 +67,35 @@ app.prepare().then(() => {
 
     socket.on("start-game", (roomId: string) => {
       socket.to(roomId).emit("start-game");
+    });
+
+    socket.on("new-response", (roomId: string, response: Response) => {
+      socket.to(roomId).emit("new-response", response);
+    });
+
+    socket.on("switch-phase", (roomId: string, responses: Response[]) => {
+      const roomSockets = io.sockets.adapter.rooms.get(roomId);
+
+      if (!roomSockets || !roomSockets.size) return;
+
+      const sockets = Array.from(roomSockets).map((id) => io.sockets.sockets.get(id));
+
+      if (!responses || !responses.length || !sockets.length) return;
+
+      const shuffledResponses = responses.sort(() => Math.random() - 0.5);
+
+      sockets.forEach((socket) => {
+        if (shuffledResponses.length > 0) {
+          let index = 0;
+          let responseToAssign = shuffledResponses[index];
+          while (responseToAssign?.playerId === socket?.id) {
+            responseToAssign = shuffledResponses[index];
+            index++;
+          }
+          shuffledResponses.splice(index, 1);
+          socket?.emit("response-assigned", responseToAssign);
+        }
+      });
     });
 
     socket.on("disconnecting", () => {
