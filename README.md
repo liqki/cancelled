@@ -1,4 +1,4 @@
-# Foobar
+# Cancelled!
 
 Cancelled! is a browser multiplayer game in the style of [Survive the Internet](https://www.jackboxgames.com/games/survive-the-internet). I created it as part of the Hackclub Arcade 2024 and sadly it's not hosted online right now, since I don't have the resources to host a socket server.
 
