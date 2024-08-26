@@ -1,5 +1,7 @@
 "use client";
 
+import Countdown from "@/components/Countdown";
+import Game from "@/components/game/Game";
 import Lobby from "@/components/game/Lobby";
 import { UserContext } from "@/context/UserContext";
 import { useSocket } from "@/hooks/useSocket";
@@ -11,6 +13,8 @@ export default function GameRoom({ params }: { params: { id: string } }) {
   const [players, setPlayers, playersRef] = useStateRef<Player[]>([]);
   const [state, setState, stateRef] = useStateRef<"waiting" | "playing" | "finished">("waiting");
   const [currentPlayer, setCurrentPlayer, currentPlayerRef] = useStateRef<Player | null>(null);
+
+  const [showCountdown, setShowCountdown] = useState(false);
 
   const roomId = params.id;
   const { socket } = useSocket(roomId);
@@ -28,6 +32,15 @@ export default function GameRoom({ params }: { params: { id: string } }) {
   const kickPlayer = (id: string) => {
     socket?.emit("player-kicked", roomId, id);
     removePlayer(id);
+  };
+
+  const startGame = () => {
+    socket?.emit("start-game", roomId);
+    setState("playing");
+  };
+
+  const stopCountdown = () => {
+    setShowCountdown(false);
   };
 
   useEffect(() => {
@@ -64,11 +77,16 @@ export default function GameRoom({ params }: { params: { id: string } }) {
       setState(state);
     });
 
+    socket?.on("start-game", () => {
+      setState("playing");
+    });
+
     return () => {
       socket?.off("player-joined");
       socket?.off("player-left");
       socket?.off("new-host");
       socket?.off("initial-data");
+      socket?.off("start-game");
     };
   }, [socket]);
 
@@ -84,5 +102,21 @@ export default function GameRoom({ params }: { params: { id: string } }) {
     if (state) stateRef.current = state;
   }, [currentPlayer, players, state]);
 
-  return <>{state === "waiting" && <Lobby players={players} currentPlayer={currentPlayer} kickPlayer={kickPlayer} />}</>;
+  useEffect(() => {
+    if (state !== "waiting") setShowCountdown(true);
+  }, [state]);
+
+  return (
+    <>
+      {showCountdown ? (
+        <Countdown stopCountdown={stopCountdown} />
+      ) : state === "waiting" ? (
+        <Lobby players={players} currentPlayer={currentPlayer} kickPlayer={kickPlayer} startGame={startGame} />
+      ) : state === "playing" ? (
+        <Game socket={socket} players={players} currentPlayer={currentPlayer} />
+      ) : (
+        <div>Ended</div>
+      )}
+    </>
+  );
 }

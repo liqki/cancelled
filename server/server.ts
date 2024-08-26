@@ -61,8 +61,11 @@ app.prepare().then(() => {
 
     socket.on("player-kicked", (roomId: string, id: string) => {
       socket.to(id).emit("kicked");
-      socket.leave(roomId);
       socket.to(roomId).emit("player-left", id);
+    });
+
+    socket.on("start-game", (roomId: string) => {
+      socket.to(roomId).emit("start-game");
     });
 
     socket.on("disconnecting", () => {
@@ -71,7 +74,6 @@ app.prepare().then(() => {
       if (!roomId) return;
 
       socket.to(roomId).emit("player-left", socket.id);
-      socket.leave(roomId);
     });
   });
 

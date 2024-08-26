@@ -2,7 +2,7 @@ import { Player } from "@/utils/types";
 import Heading from "../Heading";
 import ShareButton from "../ShareButton";
 
-export default function Lobby({ players, currentPlayer, kickPlayer }: { players: Player[]; currentPlayer: Player | null; kickPlayer: (id: string) => void }) {
+export default function Lobby({ players, currentPlayer, kickPlayer, startGame }: { players: Player[]; currentPlayer: Player | null; kickPlayer: (id: string) => void; startGame: () => void }) {
   return (
     <div className="w-screen h-screen flex flex-col gap-5 justify-center items-center">
       <Heading />
@@ -29,7 +29,9 @@ export default function Lobby({ players, currentPlayer, kickPlayer }: { players:
         </ul>
         {currentPlayer?.host ? (
           <div className="flex gap-2">
-            <button className="rounded-full bg-white text-black p-3 hover:scale-[1.01] transition-transform w-full mt-4">Start Game</button>
+            <button className="rounded-full bg-white text-black p-3 hover:scale-[1.01] transition-transform w-full mt-4" onClick={startGame}>
+              Start Game
+            </button>
             <ShareButton />
           </div>
         ) : (
