@@ -1,5 +1,5 @@
 import { Response } from "@/utils/types";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Socket } from "socket.io-client";
 
 export default function GamePrompt({
@@ -8,27 +8,44 @@ export default function GamePrompt({
   roomId,
   prompt,
   setResponses,
+  type,
 }: {
   id: string;
   socket: Socket | null;
   roomId: string;
   prompt: string;
   setResponses: Dispatch<SetStateAction<Response[]>>;
+  type: "game" | "switch";
 }) {
   const [response, setResponse] = useState("");
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    setResponse("");
+    setSubmitted(false);
+  }, [type]);
 
   return (
     <div className="w-4/5 flex flex-col gap-4 justify-center items-center">
       {!submitted ? (
         <>
-          <p className="text-xl font-semibold">{prompt}</p>
+          {type === "game" ? (
+            <p className="text-xl font-semibold">{prompt}</p>
+          ) : (
+            <>
+              <div className="relative text-3xl font-bold bg-white text-black py-4 px-2 rounded-md text-center">
+                '{prompt}'<div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-t-8 border-t-white border-r-8 border-r-transparent border-l-8 border-l-transparent" />
+              </div>
+              <p className="text-xl font-semibold">would be a really weird response to this comment:</p>
+            </>
+          )}
           <form
             className="flex gap-2 w-full"
             onSubmit={(e) => {
               e.preventDefault();
               if (!response) return;
-              setResponses((responses) => [...responses, { playerId: id, response }]);
+              if (type === "game") setResponses((responses) => [...responses, { playerId: id, response, switchResponse: "", voteIds: [] }]);
+              else setResponses((responses) => responses.map((item) => (item?.response === prompt ? { ...item, switchResponse: response } : item)));
               socket?.emit("new-response", roomId, { playerId: id, response });
               setSubmitted(true);
             }}

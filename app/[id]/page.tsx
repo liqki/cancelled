@@ -35,6 +35,7 @@ export default function GameRoom({ params }: { params: { id: string } }) {
   };
 
   const startGame = () => {
+    if (playersRef.current.length < 2) return;
     socket?.emit("start-game", roomId);
     setState("playing");
   };

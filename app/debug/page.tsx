@@ -1,11 +1,75 @@
 "use client";
 
-import SwitchPrompt from "@/components/game/SwitchPrompt";
+import VoteScreen from "@/components/game/VoteScreen";
 
 export default function page() {
   return (
     <main className="w-screen h-screen grid place-items-center">
-      <SwitchPrompt prompt="This is a pretty long test text to test the display of the switch prompt LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL" />
+      <VoteScreen
+        socket={null}
+        responses={[
+          {
+            playerId: "jfdskalö",
+            response: "I am a response",
+            switchResponse: "I am a switch response",
+            voteIds: [],
+          },
+          {
+            playerId: "jfdskalö",
+            response: "I am a response",
+            switchResponse: "I am a switch response",
+            voteIds: ["jfdskalö"],
+          },
+          {
+            playerId: "jfdskalö",
+            response: "I am a response",
+            switchResponse: "I am a switch response",
+            voteIds: [],
+          },
+          {
+            playerId: "jfdskalö",
+            response: "I am a response",
+            switchResponse: "I am a switch response",
+            voteIds: ["jfdskalö"],
+          },
+          {
+            playerId: "jfdskalö",
+            response: "I am a response",
+            switchResponse: "I am a switch response",
+            voteIds: [],
+          },
+          {
+            playerId: "jfdskalö",
+            response: "I am a response",
+            switchResponse: "I am a switch response",
+            voteIds: ["jfdskalö"],
+          },
+          {
+            playerId: "jfdskalö",
+            response: "I am a response",
+            switchResponse: "I am a switch response",
+            voteIds: [],
+          },
+          {
+            playerId: "jfdskalö",
+            response: "I am a response",
+            switchResponse: "I am a switch response",
+            voteIds: ["jfdskalö"],
+          },
+          {
+            playerId: "jfdskalö",
+            response: "I am a response",
+            switchResponse: "I am a switch response",
+            voteIds: [],
+          },
+          {
+            playerId: "jfdskalö",
+            response: "I am a response",
+            switchResponse: "I am a switch response",
+            voteIds: ["jfdskalö"],
+          },
+        ]}
+      />
     </main>
   );
 }
